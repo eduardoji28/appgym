@@ -16,11 +16,16 @@ function showError(message) {
 }
 
 let db;
-try {
-  db = await openAttendanceDb();
+
+async function refresh() {
   const today = localDate();
   todayLabel.textContent = today;
   showStatus(await isRegistered(db, today));
+}
+
+try {
+  db = await openAttendanceDb();
+  await refresh();
 } catch {
   showError('No se pudo abrir el almacenamiento de la app.');
 }
@@ -28,8 +33,13 @@ try {
 registerButton.addEventListener('click', async () => {
   try {
     await registerToday(db);
-    showStatus(true);
+    await refresh();
   } catch {
     showError('No se pudo guardar el registro. Intenta de nuevo.');
   }
+});
+
+// An installed app stays open in the background: recompute "today" when it comes back.
+document.addEventListener('visibilitychange', () => {
+  if (db && !document.hidden) refresh().catch(() => showError('No se pudo leer el registro de hoy.'));
 });

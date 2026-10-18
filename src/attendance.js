@@ -33,12 +33,11 @@ async function requestPersistentStorage(storage) {
 export async function registerToday(db, now = new Date(), storage = globalThis.navigator?.storage) {
   const date = localDate(now);
   const tx = db.transaction(STORE, 'readwrite');
-  const total = await tx.store.count();
-  const existing = await tx.store.get(date);
-  if (existing) {
+  if (await tx.store.get(date)) {
     await tx.done;
     return { created: false, date };
   }
+  const total = await tx.store.count();
   await tx.store.add({ date, registeredAt: now.toISOString() });
   await tx.done;
   if (total === 0) await requestPersistentStorage(storage);

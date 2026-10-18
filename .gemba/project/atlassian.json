@@ -1,0 +1,5 @@
+{
+  "site": "deducoder.atlassian.net",
+  "jira": { "project": "AG" },
+  "confluence": { "space": "AG" }
+}

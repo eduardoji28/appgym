@@ -11,8 +11,9 @@ function showStatus(registered) {
 }
 
 const db = await openAttendanceDb();
-todayLabel.textContent = localDate();
-showStatus(await isRegistered(db, localDate()));
+const today = localDate();
+todayLabel.textContent = today;
+showStatus(await isRegistered(db, today));
 
 registerButton.addEventListener('click', async () => {
   await registerToday(db);

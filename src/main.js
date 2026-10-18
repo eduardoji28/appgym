@@ -10,12 +10,26 @@ function showStatus(registered) {
   statusLabel.dataset.registered = String(registered);
 }
 
-const db = await openAttendanceDb();
-const today = localDate();
-todayLabel.textContent = today;
-showStatus(await isRegistered(db, today));
+function showError(message) {
+  statusLabel.textContent = message;
+  statusLabel.dataset.registered = 'false';
+}
+
+let db;
+try {
+  db = await openAttendanceDb();
+  const today = localDate();
+  todayLabel.textContent = today;
+  showStatus(await isRegistered(db, today));
+} catch {
+  showError('No se pudo abrir el almacenamiento de la app.');
+}
 
 registerButton.addEventListener('click', async () => {
-  await registerToday(db);
-  showStatus(true);
+  try {
+    await registerToday(db);
+    showStatus(true);
+  } catch {
+    showError('No se pudo guardar el registro. Intenta de nuevo.');
+  }
 });

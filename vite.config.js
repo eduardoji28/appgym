@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const base = '/appgym/';
+
 export default defineConfig({
-  base: '/appgym/',
+  base,
   plugins: [
     VitePWA({
       registerType: 'autoUpdate',
@@ -11,8 +13,8 @@ export default defineConfig({
         short_name: 'appgym',
         description: 'Registra los días que vas al gym y ve tu constancia.',
         lang: 'es-MX',
-        start_url: '/appgym/',
-        scope: '/appgym/',
+        start_url: base,
+        scope: base,
         display: 'standalone',
         background_color: '#1f7a4d',
         theme_color: '#1f7a4d',

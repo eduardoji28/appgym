@@ -43,3 +43,7 @@ export async function registerToday(db, now = new Date(), storage = globalThis.n
   if (total === 0) await requestPersistentStorage(storage);
   return { created: true, date };
 }
+
+export function registeredDates(db) {
+  return db.getAllKeys(STORE);
+}

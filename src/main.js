@@ -1,8 +1,11 @@
 import './style.css';
-import { isRegistered, localDate, openAttendanceDb, registerToday } from './attendance.js';
+import { localDate, openAttendanceDb, registeredDates, registerToday } from './attendance.js';
+import { streak, weekDays } from './week.js';
 
 const todayLabel = document.querySelector('#today');
 const statusLabel = document.querySelector('#status');
+const weekList = document.querySelector('#week');
+const streakLabel = document.querySelector('#streak');
 const registerButton = document.querySelector('#register');
 
 function showStatus(registered) {
@@ -17,10 +20,33 @@ function showError(message) {
 
 let db;
 
+const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+function showWeek(days, registered) {
+  weekList.replaceChildren(
+    ...days.map((date, i) => {
+      const item = document.createElement('li');
+      item.textContent = DAY_LETTERS[i];
+      item.dataset.registered = String(registered.has(date));
+      item.title = date;
+      return item;
+    }),
+  );
+}
+
+function showStreak(weeks) {
+  streakLabel.textContent = weeks === 1 ? 'Racha: 1 semana' : `Racha: ${weeks} semanas`;
+}
+
 async function refresh() {
-  const today = localDate();
+  const now = new Date();
+  const today = localDate(now);
+  const dates = await registeredDates(db);
+  const registered = new Set(dates);
   todayLabel.textContent = today;
-  showStatus(await isRegistered(db, today));
+  showStatus(registered.has(today));
+  showWeek(weekDays(now), registered);
+  showStreak(streak(dates, now));
 }
 
 try {

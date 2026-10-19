@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { localDate } from '../src/attendance.js';
 import { streak, weekDays } from '../src/week.js';
 
 describe('weekDays', () => {
@@ -35,7 +36,10 @@ describe('weekDays', () => {
 
 describe('streak', () => {
   const now = new Date(2026, 9, 21, 10, 0); // Wednesday, week of 2026-10-19
-  const fullWeek = (monday) => [0, 1, 2, 3].map((i) => `${monday.slice(0, 8)}${String(Number(monday.slice(8)) + i).padStart(2, '0')}`);
+  const fullWeek = (monday) => {
+    const [year, month, day] = monday.split('-').map(Number);
+    return [0, 1, 2, 3].map((i) => localDate(new Date(year, month - 1, day + i)));
+  };
 
   it('is zero without records', () => {
     expect(streak([], now)).toBe(0);
@@ -63,6 +67,10 @@ describe('streak', () => {
 
   it('breaks at a previous week without records', () => {
     expect(streak(fullWeek('2026-10-05'), now)).toBe(0);
+  });
+
+  it('builds a full week even when it crosses a month boundary', () => {
+    expect(fullWeek('2026-10-29')).toEqual(['2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01']);
   });
 
   it('counts a Sunday in the week that ends that day and a Monday in the next', () => {

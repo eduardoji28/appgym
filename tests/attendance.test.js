@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
-import { isRegistered, localDate, openAttendanceDb, registerToday } from '../src/attendance.js';
+import { isRegistered, localDate, openAttendanceDb, registeredDates, registerToday } from '../src/attendance.js';
 
 let dbCount = 0;
 const newDbName = () => `attendance-test-${dbCount++}`;
@@ -99,5 +99,21 @@ describe('persistent storage request', () => {
     const result = await registerToday(db, new Date(2026, 9, 18, 9, 0), undefined);
 
     expect(result.created).toBe(true);
+  });
+});
+
+describe('registeredDates', () => {
+  it('lists every registered day in order', async () => {
+    const db = await openAttendanceDb(newDbName());
+    await registerToday(db, new Date(2026, 9, 18, 9, 0), storageMock());
+    await registerToday(db, new Date(2026, 9, 17, 9, 0), storageMock());
+
+    expect(await registeredDates(db)).toEqual(['2026-10-17', '2026-10-18']);
+  });
+
+  it('is empty without records', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    expect(await registeredDates(db)).toEqual([]);
   });
 });

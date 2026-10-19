@@ -2,13 +2,12 @@ import { localDate } from './attendance.js';
 
 const GOAL = 4;
 
-function weekStart(now) {
-  const sinceMonday = (now.getDay() + 6) % 7;
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate() - sinceMonday);
-}
-
 function addDays(date, days) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+function weekStart(date) {
+  return addDays(date, -((date.getDay() + 6) % 7));
 }
 
 export function weekDays(now = new Date()) {
@@ -25,10 +24,10 @@ export function streak(registeredDates, now = new Date()) {
   }
   const met = (monday) => (perWeek.get(localDate(monday)) ?? 0) >= GOAL;
 
+  // An unfinished current week neither adds to the streak nor breaks it.
   let monday = weekStart(now);
+  if (!met(monday)) monday = addDays(monday, -7);
   let weeks = 0;
-  if (met(monday)) weeks++;
-  monday = addDays(monday, -7);
   while (met(monday)) {
     weeks++;
     monday = addDays(monday, -7);

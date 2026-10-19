@@ -20,15 +20,17 @@ function showError(message) {
 
 let db;
 
-const DAY_LETTERS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+const DAY_NAMES = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
 
 function showWeek(days, registered) {
   weekList.replaceChildren(
     ...days.map((date, i) => {
       const item = document.createElement('li');
-      item.textContent = DAY_LETTERS[i];
-      item.dataset.registered = String(registered.has(date));
+      const attended = registered.has(date);
+      item.textContent = DAY_NAMES[i][0].toUpperCase();
+      item.dataset.registered = String(attended);
       item.title = date;
+      item.setAttribute('aria-label', `${DAY_NAMES[i]} ${date}: ${attended ? 'asististe' : 'sin registro'}`);
       return item;
     }),
   );

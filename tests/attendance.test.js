@@ -147,6 +147,14 @@ describe('registerPastDay', () => {
     expect(await db.count('attendance')).toBe(1);
   });
 
+  it('accepts today as the last day that can be marked', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    const result = await registerPastDay(db, '2026-10-21', now, storageMock());
+
+    expect(result).toEqual({ created: true, date: '2026-10-21' });
+  });
+
   it('saves nothing for a day after today', async () => {
     const db = await openAttendanceDb(newDbName());
 

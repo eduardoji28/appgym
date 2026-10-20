@@ -1,6 +1,14 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it, vi } from 'vitest';
-import { isRegistered, localDate, openAttendanceDb, registeredDates, registerToday } from '../src/attendance.js';
+import {
+  isRegistered,
+  localDate,
+  openAttendanceDb,
+  registeredDates,
+  registerPastDay,
+  registerToday,
+  unregisterDay,
+} from '../src/attendance.js';
 
 let dbCount = 0;
 const newDbName = () => `attendance-test-${dbCount++}`;
@@ -115,5 +123,85 @@ describe('registeredDates', () => {
     const db = await openAttendanceDb(newDbName());
 
     expect(await registeredDates(db)).toEqual([]);
+  });
+});
+
+describe('registerPastDay', () => {
+  const now = new Date(2026, 9, 21, 9, 0);
+
+  it('registers a past day that has no record', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    const result = await registerPastDay(db, '2026-10-15', now, storageMock());
+
+    expect(result).toEqual({ created: true, date: '2026-10-15' });
+    expect(await isRegistered(db, '2026-10-15')).toBe(true);
+  });
+
+  it('does not create a second record when the day is already registered', async () => {
+    const db = await openAttendanceDb(newDbName());
+    await registerPastDay(db, '2026-10-15', now, storageMock());
+
+    const second = await registerPastDay(db, '2026-10-15', now, storageMock());
+
+    expect(second).toEqual({ created: false, date: '2026-10-15' });
+    expect(await db.count('attendance')).toBe(1);
+  });
+
+  it('accepts today as the last day that can be marked', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    const result = await registerPastDay(db, '2026-10-21', now, storageMock());
+
+    expect(result).toEqual({ created: true, date: '2026-10-21' });
+  });
+
+  it('saves nothing for a day after today', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    const result = await registerPastDay(db, '2026-10-22', now, storageMock());
+
+    expect(result).toEqual({ created: false, date: '2026-10-22', reason: 'future' });
+    expect(await db.count('attendance')).toBe(0);
+  });
+
+  it('saves nothing without a chosen day', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    const result = await registerPastDay(db, '', now, storageMock());
+
+    expect(result).toEqual({ created: false, date: '', reason: 'missing' });
+    expect(await db.count('attendance')).toBe(0);
+  });
+});
+
+describe('unregisterDay', () => {
+  it('removes a registered day', async () => {
+    const db = await openAttendanceDb(newDbName());
+    await registerToday(db, new Date(2026, 9, 21, 9, 0), storageMock());
+
+    const result = await unregisterDay(db, '2026-10-21');
+
+    expect(result).toEqual({ deleted: true, date: '2026-10-21' });
+    expect(await isRegistered(db, '2026-10-21')).toBe(false);
+  });
+
+  it('reports a day without a record as not deleted', async () => {
+    const db = await openAttendanceDb(newDbName());
+
+    expect(await unregisterDay(db, '2026-10-21')).toEqual({ deleted: false, date: '2026-10-21' });
+  });
+
+  it('keeps the other records after deleting one, even after reopening', async () => {
+    const name = newDbName();
+    const first = await openAttendanceDb(name);
+    await registerToday(first, new Date(2026, 9, 20, 9, 0), storageMock());
+    await registerToday(first, new Date(2026, 9, 21, 9, 0), storageMock());
+    await unregisterDay(first, '2026-10-20');
+    first.close();
+
+    const reopened = await openAttendanceDb(name);
+
+    expect(await registeredDates(reopened)).toEqual(['2026-10-21']);
   });
 });

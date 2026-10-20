@@ -53,6 +53,14 @@ export async function registerPastDay(db, date, now = new Date(), storage = glob
   return registerDay(db, date, now, storage);
 }
 
+export async function unregisterDay(db, date) {
+  const tx = db.transaction(STORE, 'readwrite');
+  const existed = (await tx.store.get(date)) !== undefined;
+  if (existed) await tx.store.delete(date);
+  await tx.done;
+  return { deleted: existed, date };
+}
+
 export function registeredDates(db) {
   return db.getAllKeys(STORE);
 }

@@ -78,13 +78,18 @@ const PAST_MESSAGES = {
 
 pastForm.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (!db) {
+    pastStatus.textContent = 'No se pudo abrir el almacenamiento de la app.';
+    return;
+  }
   try {
     const { created, reason } = await registerPastDay(db, pastDate.value);
-    await refresh();
     pastStatus.textContent = created ? 'Día registrado.' : (PAST_MESSAGES[reason] ?? 'Ese día ya estaba registrado.');
   } catch {
     pastStatus.textContent = 'No se pudo guardar el registro. Intenta de nuevo.';
+    return;
   }
+  await refresh().catch(() => showError('No se pudo leer el registro de hoy.'));
 });
 
 // An installed app stays open in the background: recompute "today" when it comes back.

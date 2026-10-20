@@ -30,8 +30,7 @@ async function requestPersistentStorage(storage) {
   }
 }
 
-export async function registerToday(db, now = new Date(), storage = globalThis.navigator?.storage) {
-  const date = localDate(now);
+async function registerDay(db, date, now, storage) {
   const tx = db.transaction(STORE, 'readwrite');
   if (await tx.store.get(date)) {
     await tx.done;
@@ -42,6 +41,16 @@ export async function registerToday(db, now = new Date(), storage = globalThis.n
   await tx.done;
   if (total === 0) await requestPersistentStorage(storage);
   return { created: true, date };
+}
+
+export function registerToday(db, now = new Date(), storage = globalThis.navigator?.storage) {
+  return registerDay(db, localDate(now), now, storage);
+}
+
+export async function registerPastDay(db, date, now = new Date(), storage = globalThis.navigator?.storage) {
+  if (!date) return { created: false, date, reason: 'missing' };
+  if (date > localDate(now)) return { created: false, date, reason: 'future' };
+  return registerDay(db, date, now, storage);
 }
 
 export function registeredDates(db) {

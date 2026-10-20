@@ -1,5 +1,5 @@
 import './style.css';
-import { localDate, openAttendanceDb, registeredDates, registerPastDay, registerToday } from './attendance.js';
+import { localDate, openAttendanceDb, registeredDates, registerPastDay, registerToday, unregisterDay } from './attendance.js';
 import { streak, weekDays } from './week.js';
 
 const todayLabel = document.querySelector('#today');
@@ -30,13 +30,33 @@ function showWeek(days, registered) {
     ...days.map((date, i) => {
       const item = document.createElement('li');
       const attended = registered.has(date);
-      item.textContent = DAY_NAMES[i][0].toUpperCase();
+      const letter = DAY_NAMES[i][0].toUpperCase();
       item.dataset.registered = String(attended);
       item.title = date;
-      item.setAttribute('aria-label', `${DAY_NAMES[i]} ${date}: ${attended ? 'asististe' : 'sin registro'}`);
+      if (attended) {
+        const remove = document.createElement('button');
+        remove.type = 'button';
+        remove.textContent = letter;
+        remove.setAttribute('aria-label', `${DAY_NAMES[i]} ${date}: asististe. Eliminar registro`);
+        remove.addEventListener('click', () => removeDay(date));
+        item.append(remove);
+      } else {
+        item.textContent = letter;
+        item.setAttribute('aria-label', `${DAY_NAMES[i]} ${date}: sin registro`);
+      }
       return item;
     }),
   );
+}
+
+async function removeDay(date) {
+  if (!confirm(`¿Eliminar el registro del ${date}?`)) return;
+  try {
+    await unregisterDay(db, date);
+    await refresh();
+  } catch {
+    showError('No se pudo eliminar el registro. Intenta de nuevo.');
+  }
 }
 
 function showStreak(weeks) {

@@ -53,10 +53,11 @@ async function removeDay(date) {
   if (!confirm(`¿Eliminar el registro del ${date}?`)) return;
   try {
     await unregisterDay(db, date);
-    await refresh();
   } catch {
     showError('No se pudo eliminar el registro. Intenta de nuevo.');
+    return;
   }
+  await refresh().catch(() => showError('No se pudo leer el registro de hoy.'));
 }
 
 function showStreak(weeks) {
